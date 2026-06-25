@@ -6,6 +6,10 @@ import { Navigation, Plus, MapPin, RefreshCw, LogOut, Radio, Search, Image, Lock
 import GlobeView from "./GlobeView";
 import MapView from "./MapView";
 import CreatePostPanel from "./CreatePostPanel";
+import BrowseFeedPanel from "./BrowseFeedPanel";
+import SearchPanel from "./SearchPanel";
+import FriendsPanel from "./FriendsPanel";
+import ProfilePanel from "./ProfilePanel";
 import { landmarks } from "../data/landmarks";
 
 // Helper to calculate distance in meters (Haversine formula)
@@ -861,94 +865,60 @@ export default function Dashboard({ auth, user, db }) {
         overflow: "hidden",
         zIndex: 90
       }}>
-        {/* Navigation Tabs Header */}
+        {/* Navigation Tabs Header — Crystal Glass */}
         <div style={{
           display: "flex",
-          justifyContent: "space-between",
-          padding: "16px",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-          backgroundColor: "rgba(255,255,255,0.01)"
+          justifyContent: "space-around",
+          padding: "10px 12px",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.01)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          gap: "4px",
         }}>
-          <button
-            onClick={() => setActiveTab("browse")}
-            title="Browse Feed"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              color: activeTab === "browse" ? "#0070f3" : "#666",
-              backgroundColor: activeTab === "browse" ? "rgba(0, 112, 243, 0.1)" : "transparent",
-              transition: "all 0.2s"
-            }}
-          >
-            <Globe size={20} />
-          </button>
-          <button
-            onClick={() => setActiveTab("create")}
-            title="Create Post"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              color: activeTab === "create" ? "#0070f3" : "#666",
-              backgroundColor: activeTab === "create" ? "rgba(0, 112, 243, 0.1)" : "transparent",
-              transition: "all 0.2s"
-            }}
-          >
-            <Plus size={20} />
-          </button>
-          <button
-            onClick={() => setActiveTab("search")}
-            title="Search Around You"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              color: activeTab === "search" ? "#0070f3" : "#666",
-              backgroundColor: activeTab === "search" ? "rgba(0, 112, 243, 0.1)" : "transparent",
-              transition: "all 0.2s"
-            }}
-          >
-            <Radio size={20} />
-          </button>
-          <button
-            onClick={() => setActiveTab("friends")}
-            title="Friends Management"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              color: activeTab === "friends" ? "#0070f3" : "#666",
-              backgroundColor: activeTab === "friends" ? "rgba(0, 112, 243, 0.1)" : "transparent",
-              transition: "all 0.2s"
-            }}
-          >
-            <Users size={20} />
-          </button>
-          <button
-            onClick={() => setActiveTab("profile")}
-            title="Edit Profile"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              color: activeTab === "profile" ? "#0070f3" : "#666",
-              backgroundColor: activeTab === "profile" ? "rgba(0, 112, 243, 0.1)" : "transparent",
-              transition: "all 0.2s"
-            }}
-          >
-            <Settings size={20} />
-          </button>
+          {[
+            { tab: "browse",  Icon: Globe,    title: "Browse Feed",       color: "#4F9FFF" },
+            { tab: "create",  Icon: Plus,     title: "Drop a Pin",        color: "#00E5FF" },
+            { tab: "search",  Icon: Radio,    title: "Search Nearby",     color: "#39FF14" },
+            { tab: "friends", Icon: Users,    title: "Friends",           color: "#B47FFF" },
+            { tab: "profile", Icon: Settings, title: "Edit Profile",      color: "#B47FFF" },
+          ].map(({ tab, Icon, title, color }) => {
+            const active = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                title={title}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "3px",
+                  padding: "8px 4px",
+                  borderRadius: "10px",
+                  border: active ? `1px solid ${color}44` : "1px solid transparent",
+                  background: active
+                    ? `linear-gradient(135deg,${color}18,${color}08)`
+                    : "transparent",
+                  cursor: "pointer",
+                  color: active ? color : "#555",
+                  transition: "all 0.22s cubic-bezier(0.4,0,0.2,1)",
+                  boxShadow: active ? `0 0 14px ${color}22` : "none",
+                  position: "relative",
+                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#aaa"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = "#555"; }}
+              >
+                <Icon size={18} style={{ filter: active ? `drop-shadow(0 0 6px ${color})` : "none", transition: "filter 0.2s" }} />
+                {active && (
+                  <span style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", opacity: 0.9, whiteSpace: "nowrap" }}>
+                    {title}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content Body */}
@@ -960,8 +930,26 @@ export default function Dashboard({ auth, user, db }) {
           flexDirection: "column",
           gap: activeTab === "create" ? "0" : "20px"
         }}>
-          {/* TAB 1: BROWSE FEED */}
+          {/* TAB 1: BROWSE FEED — Crystal Glass Panel */}
           {activeTab === "browse" && (
+            <BrowseFeedPanel
+              visiblePins={visiblePins}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              user={user}
+              handleToggleLike={handleToggleLike}
+              activeCommentsPostId={activeCommentsPostId}
+              setActiveCommentsPostId={setActiveCommentsPostId}
+              commentsList={commentsList}
+              newCommentText={newCommentText}
+              setNewCommentText={setNewCommentText}
+              handleAddComment={handleAddComment}
+              setGlobeTarget={setGlobeTarget}
+            />
+          )}
+
+          {/* TAB 1b: BROWSE FEED placeholder — DO NOT REMOVE (bracket anchor) */}
+          {false && (
             <>
               <div>
                 <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
@@ -1222,8 +1210,22 @@ export default function Dashboard({ auth, user, db }) {
             />
           )}
 
-          {/* TAB 3: SEARCH AROUND YOU */}
+          {/* TAB 3: SEARCH AROUND YOU — Crystal Glass Panel */}
           {activeTab === "search" && (
+            <SearchPanel
+              userCoords={userCoords}
+              nearbyPins={nearbyPins}
+              searchNearRadius={searchNearRadius}
+              setSearchNearRadius={setSearchNearRadius}
+              updateLocation={updateLocation}
+              isRefreshingLocation={isRefreshingLocation}
+              setSelectedCoords={setSelectedCoords}
+              setGlobeTarget={setGlobeTarget}
+            />
+          )}
+
+          {/* TAB 3b: anchor */}
+          {false && (
             <>
               <div>
                 <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
@@ -1357,8 +1359,27 @@ export default function Dashboard({ auth, user, db }) {
             </>
           )}
 
-          {/* TAB 4: FRIENDS MANAGEMENT */}
+          {/* TAB 4: FRIENDS MANAGEMENT — Crystal Glass Panel */}
           {activeTab === "friends" && (
+            <FriendsPanel
+              profile={profile}
+              user={user}
+              friendSearchQuery={friendSearchQuery}
+              setFriendSearchQuery={setFriendSearchQuery}
+              friendSearchResult={friendSearchResult}
+              friendSearchLoading={friendSearchLoading}
+              friendSearchError={friendSearchError}
+              handleSearchFriend={handleSearchFriend}
+              handleAddFriend={handleAddFriend}
+              handleRemoveFriend={handleRemoveFriend}
+              friendsList={friendsList}
+              copiedUid={copiedUid}
+              handleCopyUid={handleCopyUid}
+            />
+          )}
+
+          {/* TAB 4b: anchor */}
+          {false && (
             <>
               <div>
                 <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
@@ -1560,8 +1581,26 @@ export default function Dashboard({ auth, user, db }) {
             </>
           )}
 
-          {/* TAB 5: EDIT PROFILE */}
+          {/* TAB 5: EDIT PROFILE — Crystal Glass Panel */}
           {activeTab === "profile" && (
+            <ProfilePanel
+              profile={profile}
+              user={user}
+              editUsername={editUsername}
+              setEditUsername={setEditUsername}
+              editBio={editBio}
+              setEditBio={setEditBio}
+              profilePicPreview={profilePicPreview}
+              setProfilePicPreview={setProfilePicPreview}
+              profileFile={profileFile}
+              setProfileFile={setProfileFile}
+              savingProfile={savingProfile}
+              handleSaveProfile={handleSaveProfile}
+            />
+          )}
+
+          {/* TAB 5b: anchor */}
+          {false && (
             <>
               <div>
                 <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
