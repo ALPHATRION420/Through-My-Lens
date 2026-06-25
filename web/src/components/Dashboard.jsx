@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Navigation, Plus, MapPin, RefreshCw, LogOut, Radio, Search, Image, Lock, Unlock, Compass, Crosshair, X, UploadCloud, Globe, Users, User, Heart, MessageSquare, Copy, Check, Send, Settings, Eye, Layers } from "lucide-react";
 import GlobeView from "./GlobeView";
 import MapView from "./MapView";
+import CreatePostPanel from "./CreatePostPanel";
 import { landmarks } from "../data/landmarks";
 
 // Helper to calculate distance in meters (Haversine formula)
@@ -953,11 +954,11 @@ export default function Dashboard({ auth, user, db }) {
         {/* Tab Content Body */}
         <div style={{
           flex: 1,
-          overflowY: "auto",
-          padding: "20px",
+          overflowY: activeTab === "create" ? "hidden" : "auto",
+          padding: activeTab === "create" ? "0" : "20px",
           display: "flex",
           flexDirection: "column",
-          gap: "20px"
+          gap: activeTab === "create" ? "0" : "20px"
         }}>
           {/* TAB 1: BROWSE FEED */}
           {activeTab === "browse" && (
@@ -1191,306 +1192,34 @@ export default function Dashboard({ auth, user, db }) {
             </>
           )}
 
-          {/* TAB 2: CREATE POST */}
+          {/* TAB 2: CREATE POST — Crystal Glassmorphism Panel */}
           {activeTab === "create" && (
-            <>
-              <div>
-                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
-                  Create Post
-                </h3>
-                <p style={{ color: "#888", fontSize: "12px" }}>
-                  Drop a pin at coordinates to record your memories in 3D space.
-                </p>
-              </div>
-
-              {/* Landmark quick access inside Create tab */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 600, color: "#888", textTransform: "uppercase" }}>
-                  Quick Coordinate Selection
-                </span>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const landmarkId = e.target.value;
-                    if (!landmarkId) return;
-                    const landmark = landmarks.find(l => l.id === landmarkId);
-                    if (landmark) {
-                      setSelectedCoords({ lat: landmark.latitude, lng: landmark.longitude });
-                      setGlobeTarget({ lat: landmark.latitude, lng: landmark.longitude });
-                      setTitle(landmark.name);
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    backgroundColor: "#0a0a0a",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: "8px",
-                    padding: "8px",
-                    fontSize: "13px",
-                    color: "#fff"
-                  }}
-                >
-                  <option value="">-- Jump to Landmark --</option>
-                  {landmarks.map(landmark => (
-                    <option key={landmark.id} value={landmark.id}>
-                      {landmark.name} ({landmark.country})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Coordinates target display */}
-              <div style={{
-                backgroundColor: "#0a0a0a",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: "8px",
-                padding: "12px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px"
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "10px", fontWeight: 600, color: "#888", textTransform: "uppercase" }}>
-                    Selected Target
-                  </span>
-                  <button 
-                    type="button"
-                    onClick={updateLocation} 
-                    disabled={isRefreshingLocation}
-                    className="btn btn-secondary" 
-                    style={{ padding: "4px 8px", fontSize: "10px", display: "flex", alignItems: "center", gap: "4px" }}
-                  >
-                    <RefreshCw size={10} className={isRefreshingLocation ? "animate-spin" : ""} /> 
-                    {isRefreshingLocation ? "Syncing..." : "Sync GPS"}
-                  </button>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <MapPin size={16} style={{ color: "#0070f3" }} />
-                  <div style={{ fontFamily: "Space Mono, monospace", fontSize: "12px" }}>
-                    {selectedCoords.lat.toFixed(6)}, {selectedCoords.lng.toFixed(6)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Form fields */}
-              <form onSubmit={handleDropPin} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px" }}>Post Title</label>
-                  <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="E.g., Grand Canyon Visit" />
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px" }}>Description</label>
-                  <textarea required value={content} onChange={(e) => setContent(e.target.value)} placeholder="What did you capture through your lens?" style={{ minHeight: "80px" }} />
-                </div>
-
-                {/* File Uploader */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
-                    <Image size={14} style={{ color: "#0070f3" }} /> Media Attachment
-                  </label>
-
-                  {isCloudinaryConfigured ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {!imagePreview ? (
-                        <label style={{
-                          border: "1px dashed #333",
-                          borderRadius: "8px",
-                          padding: "20px 10px",
-                          textAlign: "center",
-                          cursor: "pointer",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: "8px",
-                          backgroundColor: "rgba(255,255,255,0.01)",
-                          transition: "all 0.2s"
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = "#0070f3";
-                          e.currentTarget.style.backgroundColor = "rgba(0,112,243,0.02)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "#333";
-                          e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.01)";
-                        }}
-                        >
-                          <UploadCloud size={24} style={{ color: "#666" }} />
-                          <div style={{ fontSize: "11px", color: "#ccc" }}>Select Image/Video to Upload</div>
-                          <input 
-                            type="file" 
-                            accept="image/*,video/*" 
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                setImageFile(file);
-                                setImagePreview(URL.createObjectURL(file));
-                              }
-                            }}
-                            style={{ display: "none" }}
-                          />
-                        </label>
-                      ) : (
-                        <div style={{
-                          position: "relative",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          border: "1px solid #333",
-                          height: "120px",
-                          backgroundColor: "#050505"
-                        }}>
-                          {imageFile && imageFile.type.startsWith("video/") ? (
-                            <video src={imagePreview} muted loop autoPlay style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            <img src={imagePreview} alt="Upload preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setImageFile(null);
-                              setImagePreview(null);
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: "8px",
-                              right: "8px",
-                              backgroundColor: "rgba(0,0,0,0.75)",
-                              border: "1px solid rgba(255,255,255,0.2)",
-                              borderRadius: "50%",
-                              width: "24px",
-                              height: "24px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#fff",
-                              cursor: "pointer"
-                            }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <input type="url" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="Fallback: enter direct photo URL..." />
-                    </div>
-                  )}
-                </div>
-
-                {/* Privacy Visibility Selector */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px" }}>Post Privacy</label>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setIsPublic(true)}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        borderRadius: "6px",
-                        border: "1px solid",
-                        borderColor: isPublic ? "#0070f3" : "rgba(255,255,255,0.08)",
-                        backgroundColor: isPublic ? "rgba(0, 112, 243, 0.1)" : "transparent",
-                        color: isPublic ? "#fff" : "#666",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Public
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPublic(false);
-                        setAllowLocate(false); // Can't locate private posts on globe for public
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        borderRadius: "6px",
-                        border: "1px solid",
-                        borderColor: !isPublic ? "#0070f3" : "rgba(255,255,255,0.08)",
-                        backgroundColor: !isPublic ? "rgba(0, 112, 243, 0.1)" : "transparent",
-                        color: !isPublic ? "#fff" : "#666",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Private
-                    </button>
-                  </div>
-                </div>
-
-                {/* Locate Opt-In Toggle (Public only) */}
-                {isPublic && (
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px",
-                    backgroundColor: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: "8px",
-                    marginTop: "4px"
-                  }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 600 }}>Allow others to locate on Globe</span>
-                      <span style={{ fontSize: "10px", color: "#666" }}>Let viewers focus globe target camera</span>
-                    </div>
-                    <input 
-                      type="checkbox"
-                      checked={allowLocate}
-                      onChange={(e) => setAllowLocate(e.target.checked)}
-                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
-                    />
-                  </div>
-                )}
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px" }}>Proximity Activation Radius</label>
-                  <select value={radius} onChange={(e) => setRadius(e.target.value)}>
-                    <option value="15">15m (Highly restricted)</option>
-                    <option value="50">50m (Standard proximity)</option>
-                    <option value="150">150m (Wide range)</option>
-                  </select>
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={uploading} 
-                  className="btn btn-primary" 
-                  style={{ 
-                    width: "100%", 
-                    fontWeight: 600,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: "8px"
-                  }}
-                >
-                  {uploading ? (
-                    <>
-                      <div style={{
-                        border: "2px solid rgba(255,255,255,0.2)",
-                        borderTop: "2px solid #fff",
-                        borderRadius: "50%",
-                        width: "14px",
-                        height: "14px",
-                        animation: "spin 0.8s linear infinite"
-                      }}></div>
-                      <span>Uploading Media...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={16} /> Drop Pin
-                    </>
-                  )}
-                </button>
-              </form>
-            </>
+            <CreatePostPanel
+              title={title}
+              setTitle={setTitle}
+              content={content}
+              setContent={setContent}
+              mediaUrl={mediaUrl}
+              setMediaUrl={setMediaUrl}
+              radius={radius}
+              setRadius={setRadius}
+              isPublic={isPublic}
+              setIsPublic={setIsPublic}
+              allowLocate={allowLocate}
+              setAllowLocate={setAllowLocate}
+              selectedCoords={selectedCoords}
+              setSelectedCoords={setSelectedCoords}
+              setGlobeTarget={setGlobeTarget}
+              imageFile={imageFile}
+              setImageFile={setImageFile}
+              imagePreview={imagePreview}
+              setImagePreview={setImagePreview}
+              uploading={uploading}
+              isCloudinaryConfigured={isCloudinaryConfigured}
+              isRefreshingLocation={isRefreshingLocation}
+              updateLocation={updateLocation}
+              handleDropPin={handleDropPin}
+            />
           )}
 
           {/* TAB 3: SEARCH AROUND YOU */}
