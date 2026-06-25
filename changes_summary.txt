@@ -1,0 +1,68 @@
+THROUGH MY LENS - GEOSPATIAL SOCIAL GLOBE CHANGES SUMMARY
+=========================================================
+Date: June 21, 2026
+
+This document summarizes the changes made to the "Through My Lens" geospatial social network application, detailing code modifications, bug fixes, and 3D visualization behaviors.
+
+1. ARCHITECTURAL OVERVIEW
+-------------------------
+The application features a full-screen interactive 3D Globe (and a 2D Map fallback) overlaid with a floating glassmorphic Control Panel (Hero Overlay) containing five modules:
+- Browse Feed: Scrollable feed of posts with likes, comment drawers, and locate utilities.
+- Create Post: Coordinate selector (manual GPS or preset landmark), title, description, media attachments (uploaded directly to Cloudinary), and visibility/privacy settings.
+- Search Around You: Filter posts within a user-customizable radius slider (50m to 50km).
+- Friends Management: Direct mutual friendship management by unique UID/Username.
+- Edit Profile: Update username, bio, and profile picture avatar.
+
+2. BUGS FIXED (GLOBEVIEW COMPONENT CRASH)
+-----------------------------------------
+- File: web/src/components/GlobeView.jsx
+- Issue: The globe container would fail to render and crash the React tree. In the console, warnings highlighted that an error occurred in the <ForwardRef(GlobeView)> component. This was caused by attempting to invoke a non-existent method `.barsData()` on the `globe.gl` instance.
+- Solution: Removed all references to `.barsData()`. In `globe.gl` and `three-globe`, 3D cylindrical bars pointing outward from coordinates are natively generated using the Points Layer (`.pointsData()`) by specifying custom altitude and radius properties.
+
+3. UNIFIED 3D VISUALIZATION DATA
+--------------------------------
+We combined all geographic data markers into a single `allPoints` array bound to `.pointsData()` in `GlobeView.jsx`. The globe now dynamically renders cylinder bars with custom visual parameters:
+
+- Landmark Points (Yellow Bars):
+  * Renders a short cylinder representing historic tourist points (coordinates from landmarks.js).
+  * Values: `color: "#ffc107"`, `altitude: 0.04`, `radius: 0.15`
+  * Tooltip Label: Landmark name, country, and description.
+
+- Current User Location (Neon Green Bar):
+  * Mapped if user GPS coordinates are available.
+  * Values: `color: "#39ff14"`, `altitude: 0.10`, `radius: 0.25`
+  * Tooltip Label: "My Current Location".
+
+- Drop Target Coordinates (White Bar):
+  * Placed temporarily where the user clicks on the globe or searches a location to drop a pin.
+  * Values: `color: "#ffffff"`, `altitude: 0.08`, `radius: 0.18`
+  * Tooltip Label: "Drop Target Coordinates" along with raw Latitude/Longitude.
+
+- Public Posts (Yellow Column Bars):
+  * Plotted only if the author opted in to location sharing (`allowLocate === true`).
+  * Values: `color: "#ffcc00"`, `altitude: 0.15`, `radius: 0.20`
+  * Tooltip Label: Post Title, Author Handle, Privacy status ("Public Interaction"), and content snippet.
+
+- Private Posts (Red Column Bars):
+  * Plotted only if the current viewer is authorized to see the post (author themselves or a mutual friend).
+  * Values: `color: "#ff3333"`, `altitude: 0.15`, `radius: 0.20`
+  * Tooltip Label: Post Title, Author Handle, Privacy status ("Private Interaction (Friends Only)"), and content snippet.
+
+- Concentric Rippling Rings:
+  * Rendered around active posts using `.ringsData()` to denote their proximity radius.
+  * Ring color corresponds to the post privacy (Yellow for Public, Red for Private).
+
+4. FEED INTERACTION REFINEMENTS
+-------------------------------
+- File: web/src/components/Dashboard.jsx
+- Change: Modified the "Locate" button condition on post cards. Originally, the button was only visible if `pin.allowLocate` was true. Since private posts are only shown to authorized users (author and friends) and are already plotted on the globe, they should be locatable.
+- New Condition: `(pin.allowLocate || !pin.isPublic)`. The "Locate" button is now shown for public posts with location permissions enabled, and for all visible private posts.
+- Action: Clicking "Locate" smoothly rotates and centers the 3D globe camera on the post's exact coordinates using a 1.8-second fly-to animation.
+
+5. VERIFICATION & STABILITY
+---------------------------
+- Build Check: Ran `npm run build` to confirm the code compiles cleanly for production without syntax errors.
+- Subagent Verification: 
+  * Confirmed the 3D globe renders and loads without console errors.
+  * Successfully created new posts on the globe (populated coordinates via landmark dropdowns, checked location sharing, and pushed records to Firestore).
+  * Validated camera interpolation: clicking "Locate" smoothly pans the globe from Europe to North America (focusing on USA coordinates for USA posts).
