@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, MessageSquare, Compass, Send, Globe } from "lucide-react";
+import { Search, Heart, MessageSquare, Compass, Send, Globe, Eye } from "lucide-react";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const glass = {
@@ -81,7 +81,7 @@ export default function BrowseFeedPanel({
   user, handleToggleLike,
   activeCommentsPostId, setActiveCommentsPostId,
   commentsList, newCommentText, setNewCommentText,
-  handleAddComment, setGlobeTarget,
+  handleAddComment, setGlobeTarget, onPostClick,
 }) {
   const filteredPins = visiblePins.filter(p =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -179,6 +179,14 @@ export default function BrowseFeedPanel({
                       style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px", color: isCommentOpen ? accent.cyan : "#666", fontSize:"11px", fontWeight:600, padding:0, transition:"color 0.2s" }}
                     >
                       <MessageSquare size={13} /> Comments
+                    </button>
+
+                    {/* Open PostModal */}
+                    <button
+                      onClick={() => onPostClick && onPostClick(pin)}
+                      style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px", color: accent.purple, fontSize:"11px", fontWeight:600, padding:0, transition:"color 0.2s", marginLeft: "10px" }}
+                    >
+                      <Eye size={13} /> View
                     </button>
 
                     {/* Locate */}

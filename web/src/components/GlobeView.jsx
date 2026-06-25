@@ -52,7 +52,7 @@ const getCentroid = (feature) => {
 };
 
 const GlobeView = forwardRef(function GlobeView(
-  { pins, userCoords, selectedCoords, onSelectCoords, targetCoords, theme },
+  { pins, userCoords, selectedCoords, onSelectCoords, onPostClick, targetCoords, theme },
   ref
 ) {
   const globeContainerRef = useRef(null);
@@ -350,7 +350,18 @@ const GlobeView = forwardRef(function GlobeView(
       const isPublicPost = pin.isPublic;
       const color = isPublicPost ? "#ffcc00" : "#ff3333";
       const privacyLabel = isPublicPost ? "Public Interaction" : "Private Interaction (Friends Only)";
-      const labelText = `<b>${pin.title}</b><br>Author: @${pin.authorUsername}<br><i>${privacyLabel}</i><br>${pin.content.substring(0, 60)}...`;
+      const labelText = `
+        <div class="hover-card-content">
+          <b>${pin.title}</b>
+          <i>${privacyLabel}</i>
+          <div class="hover-card-author">
+            <img src="${pin.authorProfilePic || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&h=40'}" alt=""/>
+            <span>@${pin.authorUsername}</span>
+          </div>
+          <p>${pin.content.substring(0, 100)}${pin.content.length > 100 ? '...' : ''}</p>
+          <span class="hover-card-hint">Click to expand</span>
+        </div>
+      `;
 
       // Visible core
       allPoints.push({
@@ -359,7 +370,8 @@ const GlobeView = forwardRef(function GlobeView(
         color: color,
         radius: 0.2,
         altitude: 0.15,
-        label: labelText
+        label: labelText,
+        pin: pin
       });
       // Invisible hot space
       allPoints.push({
@@ -368,7 +380,8 @@ const GlobeView = forwardRef(function GlobeView(
         color: "rgba(0, 0, 0, 0)",
         radius: 0.75,
         altitude: 0.15,
-        label: labelText
+        label: labelText,
+        pin: pin
       });
     });
 
@@ -381,7 +394,9 @@ const GlobeView = forwardRef(function GlobeView(
       .pointAltitude(d => d.altitude)
       .pointLabel(d => d.label)
       .onPointClick((point) => {
-        if (point && point.lat !== undefined && point.lng !== undefined) {
+        if (point && point.pin && onPostClick) {
+          onPostClick(point.pin);
+        } else if (point && point.lat !== undefined && point.lng !== undefined) {
           onSelectCoords({ lat: point.lat, lng: point.lng });
         }
       });

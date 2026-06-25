@@ -10,6 +10,7 @@ import BrowseFeedPanel from "./BrowseFeedPanel";
 import SearchPanel from "./SearchPanel";
 import FriendsPanel from "./FriendsPanel";
 import ProfilePanel from "./ProfilePanel";
+import PostModal from "./PostModal";
 import { landmarks } from "../data/landmarks";
 
 // Helper to calculate distance in meters (Haversine formula)
@@ -122,6 +123,7 @@ export default function Dashboard({ auth, user, db }) {
 
   // UI Navigation Tabs
   const [activeTab, setActiveTab] = useState("browse"); // "browse", "create", "search", "friends", "profile"
+  const [selectedPost, setSelectedPost] = useState(null);
 
   // Edit Profile States
   const [editUsername, setEditUsername] = useState("");
@@ -546,6 +548,7 @@ export default function Dashboard({ auth, user, db }) {
       }}>
         {viewMode === "globe" ? (
           <GlobeView
+                onPostClick={(pin) => setSelectedPost(pin)}
             ref={globeViewRef}
             pins={visiblePins}
             userCoords={userCoords}
@@ -933,6 +936,7 @@ export default function Dashboard({ auth, user, db }) {
           {/* TAB 1: BROWSE FEED — Crystal Glass Panel */}
           {activeTab === "browse" && (
             <BrowseFeedPanel
+                  onPostClick={(pin) => setSelectedPost(pin)}
               visiblePins={visiblePins}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
